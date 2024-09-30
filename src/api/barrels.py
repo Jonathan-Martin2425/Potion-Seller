@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from src.api import auth
+import sqlalchemy
+from src import database as db
 
 router = APIRouter(
     prefix="/barrels",
@@ -12,7 +14,7 @@ class Barrel(BaseModel):
     sku: str
 
     ml_per_barrel: int
-    potion_type: list[int]
+    potion_type: list[int] # in the format[0-1, 0-1, 0-1, 0-1] representing R,G, B, dark
     price: int
 
     quantity: int
@@ -22,6 +24,23 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delievered: {barrels_delivered} order_id: {order_id}")
 
+    with db.engine.begin() as connection:
+        greenMl = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar()
+        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
+
+    for b in barrels_delivered:
+        if b.potion_type[1] == 1:
+            greenMl += b.ml_per_barrel
+            gold -= b.price
+
+
+    #what does "OK" do in a Json package/SQL excecution
+    #"OK" tells the reciever that no error occurred
+
+    with db.engine.begin() as connection:
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_ml = " + greenMl + " WHERE id= 1"))
+        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = " + gold + " WHERE id= 1"))
+
     return "OK"
 
 # Gets called once a day
@@ -29,11 +48,16 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     """ """
     print(wholesale_catalog)
+    with db.engine.begin() as connection:
+        potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
 
-    return [
-        {
-            "sku": "SMALL_RED_BARREL",
-            "quantity": 1,
-        }
-    ]
+    if potions <= 10:
+        return [
+            {
+                "sku": "SMALL_GREEN_BARREL",
+                "quantity": 1,
+            }
+        ]
+    else:
+        return "OK"
 

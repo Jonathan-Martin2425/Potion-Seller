@@ -24,4 +24,4 @@ def get_catalog():
                 }
             ]
     else:
-        return "OK"
+        return []

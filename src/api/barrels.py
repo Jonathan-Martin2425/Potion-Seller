@@ -10,14 +10,16 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+
 class Barrel(BaseModel):
     sku: str
 
     ml_per_barrel: int
-    potion_type: list[int] # in the format[0-1, 0-1, 0-1, 0-1] representing R,G, B, dark
+    potion_type: list[int]  # in the format[0-1, 0-1, 0-1, 0-1] representing R,G, B, dark
     price: int
 
     quantity: int
+
 
 @router.post("/deliver/{order_id}")
 def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
@@ -33,15 +35,16 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             greenMl += b.ml_per_barrel
             gold -= b.price
 
-
-    #what does "OK" do in a Json package/SQL excecution
-    #"OK" tells the reciever that no error occurred
+    # what does "OK" do in a Json package/SQL excecution
+    # "OK" tells the reciever that no error occurred
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_ml = " + greenMl + " WHERE id= 1"))
+        result = connection.execute(
+            sqlalchemy.text("UPDATE global_inventory SET num_green_ml = " + greenMl + " WHERE id= 1"))
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = " + gold + " WHERE id= 1"))
 
     return []
+
 
 # Gets called once a day
 @router.post("/plan")
@@ -52,12 +55,13 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
         gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
 
-    green_type = [0,1,0,0]
+    green_type = [0, 1, 0, 0]
+    green_potion_sku = ""
     for barrel in wholesale_catalog:
         if barrel.potion_type == green_type and barrel.price <= gold:
             green_potion_sku = barrel.sku
 
-    if potions <= 10:
+    if potions <= 10 and green_potion_sku != "":
         return [
             {
                 "sku": green_potion_sku,
@@ -66,4 +70,3 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         ]
     else:
         return []
-

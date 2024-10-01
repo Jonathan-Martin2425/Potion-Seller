@@ -41,7 +41,7 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_ml = " + greenMl + " WHERE id= 1"))
         result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = " + gold + " WHERE id= 1"))
 
-    return "OK"
+    return []
 
 # Gets called once a day
 @router.post("/plan")

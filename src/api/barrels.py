@@ -39,10 +39,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     # "OK" tells the reciever that no error occurred
 
     with db.engine.begin() as connection:
-        result = connection.execute(
-            sqlalchemy.text("UPDATE global_inventory SET num_green_ml = " + greenMl + " WHERE id= 1"))
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET gold = " + gold + " WHERE id= 1"))
-
+        result = connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_ml = {greenMl} WHERE id= 1"))
+        result = connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
+    print(f"UPDATE global_inventory SET num_green_ml = {greenMl}  WHERE id= 1")
     return []
 
 

@@ -31,7 +31,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     #ANSWER: "OK" tells the reciever that no error occurred
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text("UPDATE global_inventory SET num_green_potions = " + potions + " WHERE id= 1"))
+        result = connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
 
     return []
 
@@ -58,6 +58,3 @@ def get_bottle_plan():
             ]
     else:
         return []
-
-if __name__ == "__main__":
-    print(get_bottle_plan())

@@ -50,10 +50,11 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
     with db.engine.begin() as connection:
         potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
+        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
 
     green_type = [0,1,0,0]
     for barrel in wholesale_catalog:
-        if barrel.potion_type == green_type:
+        if barrel.potion_type == green_type and barrel.price <= gold:
             green_potion_sku = barrel.sku
 
     if potions <= 10:

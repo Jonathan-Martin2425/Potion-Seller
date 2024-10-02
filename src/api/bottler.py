@@ -11,6 +11,8 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+POTION_TO_ML = 100 #ammount of ml required to make a potion
+
 class PotionInventory(BaseModel):
     potion_type: list[int]
     quantity: int
@@ -21,17 +23,20 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     print(f"potions delievered: {potions_delivered} order_id: {order_id}")
     with db.engine.begin() as connection:
         potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
+        greenML = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar()
 
     for b in potions_delivered:
         if b.potion_type[1] == 1:
             potions += b.quantity
+            greenML -= POTION_TO_ML
 
 
     #what does "OK" do in a Json package/SQL excecution
     #ANSWER: "OK" tells the reciever that no error occurred
 
     with db.engine.begin() as connection:
-        result = connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_ml = {greenML} WHERE id= 1"))
 
     return []
 

@@ -87,7 +87,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
-    return {"cart_id": "1"}
+    return {"cart_id": 1}
 
 
 class CartItem(BaseModel):
@@ -120,6 +120,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
 
         #gives recipet back to customer as response
-        return {"total_potions_bought": 1, "total_gold_paid": 50}
+        return {"total_potions_bought": 1, "total_gold_paid": cart_checkout.payment}
     else:
         return {"total_potions_bought": 0, "total_gold_paid": 0}

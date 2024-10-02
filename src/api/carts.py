@@ -107,14 +107,19 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    #checks if customer wanted to  buy something
     if cart_checkout.payment > 0:
         with db.engine.begin() as connection:
+
+            #updates gold gained and potion lost
             potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
             gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
             gold += int(cart_checkout.payment)
             potions -= 1
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
-        return {"total_potions_bought": 1, "total_gold_paid": 20}
+
+        #gives recipet back to customer as response
+        return {"total_potions_bought": 1, "total_gold_paid": 50}
     else:
         return {"total_potions_bought": 0, "total_gold_paid": 0}

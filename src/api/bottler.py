@@ -34,6 +34,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     #what does "OK" do in a Json package/SQL excecution
     #ANSWER: "OK" tells the reciever that no error occurred
 
+
+    #updates potions gained and potential green ml lost in creation of potions
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_ml = {greenML} WHERE id= 1"))

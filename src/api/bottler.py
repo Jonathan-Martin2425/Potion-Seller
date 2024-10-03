@@ -26,7 +26,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         greenML = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar()
 
     for b in potions_delivered:
-        if b.potion_type[1] == 100:
+        if b.potion_type[1] == 100 and b.quantity > 0:
             potions += b.quantity
             greenML -= POTION_TO_ML
 

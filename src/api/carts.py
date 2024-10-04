@@ -11,6 +11,8 @@ router = APIRouter(
     dependencies=[Depends(auth.get_api_key)],
 )
 
+cur_cart_id = 1
+
 class search_sort_options(str, Enum):
     customer_name = "customer_name"
     item_sku = "item_sku"
@@ -87,7 +89,10 @@ def post_visits(visit_id: int, customers: list[Customer]):
 @router.post("/")
 def create_cart(new_cart: Customer):
     """ """
-    return {"cart_id": 1}
+    global cur_cart_id
+    temp = cur_cart_id
+    cur_cart_id = cur_cart_id + 1
+    return {"cart_id": temp}
 
 
 class CartItem(BaseModel):
@@ -96,7 +101,10 @@ class CartItem(BaseModel):
 
 @router.post("/{cart_id}/items/{item_sku}")
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
-    """ """
+    """ takes requested potion and ammount(CartItem)
+        and sets their order in supabase using their ID"""
+
+    
 
     return "OK"
 
@@ -107,6 +115,8 @@ class CartCheckout(BaseModel):
 @router.post("/{cart_id}/checkout")
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
+    global cur_cart_id
+    cur_cart_id = cur_cart_id -1
     #checks if customer wanted to  buy something
     if cart_checkout.payment > 0:
         with db.engine.begin() as connection:
@@ -120,6 +130,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
 
         #gives recipet back to customer as response
-        return {"total_potions_bought": 1, "total_gold_paid": cart_checkout.payment}
+        return {"total_potions_bought": 1, "total_gold_paid": int(cart_checkout.payment)}
     else:
         return {"total_potions_bought": 0, "total_gold_paid": 0}

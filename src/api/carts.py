@@ -118,7 +118,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     global cur_cart_id
     cur_cart_id = cur_cart_id -1
     #checks if customer wanted to  buy something
-    if cart_checkout.payment > 0:
+    if int(cart_checkout.payment) > 0:
         with db.engine.begin() as connection:
 
             #updates gold gained and potion lost

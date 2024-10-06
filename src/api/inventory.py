@@ -15,8 +15,8 @@ router = APIRouter(
 def get_inventory():
     """ """
     with db.engine.begin() as connection:
-        potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
-        green_ml = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar()
+        potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
+        green_ml = connection.execute(sqlalchemy.text("SELECT ml FROM global_inventory")).scalar()
         gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
     return {"number_of_potions": potions, "ml_in_barrels": green_ml, "gold": gold}
 
@@ -29,8 +29,8 @@ def get_capacity_plan():
     """
 
     return {
-        "potion_capacity": 0,
-        "ml_capacity": 0
+        "potion_capacity": 85,
+        "ml_capacity": 4000
         }
 
 class CapacityPurchase(BaseModel):

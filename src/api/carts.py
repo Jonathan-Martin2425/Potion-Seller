@@ -147,7 +147,9 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     # checks if customer wanted to  buy something
-    if int(cart_checkout.payment) > 0:
+    payment = float(cart_checkout.payment)
+    print(payment)
+    if payment > 0:
         with db.engine.begin() as connection:
             # gets attributes from global inventory table
             total_potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()

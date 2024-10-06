@@ -66,7 +66,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
     # updates potions gained and potential green ml lost in creation of potions
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET num_green_potions = {potions} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {potions} WHERE id= 1"))
 
         # updates quantity of all potion types
         connection.execute(sqlalchemy.text(
@@ -99,10 +99,10 @@ def get_bottle_plan():
 
     # gets potion amounts and ml amounts
     with db.engine.begin() as connection:
-        potions = connection.execute(sqlalchemy.text("SELECT num_green_potions FROM global_inventory")).scalar()
-        redMl = connection.execute(sqlalchemy.text("SELECT num_blue_ml FROM global_inventory")).scalar()
-        greenMl = connection.execute(sqlalchemy.text("SELECT num_green_ml FROM global_inventory")).scalar()
-        blueMl = connection.execute(sqlalchemy.text("SELECT num_red_ml FROM global_inventory")).scalar()
+        potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
+        redMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'red'")).scalar()
+        greenMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'green'")).scalar()
+        blueMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'blue'")).scalar()
 
     res = []
     # checks if potion capacity has been reached to add potions

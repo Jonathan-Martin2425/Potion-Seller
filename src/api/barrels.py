@@ -39,14 +39,14 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
         # gets quantity of ml for each type
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= red")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'red'")).scalar())
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= green")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'green'")).scalar())
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= blue")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'blue'")).scalar())
 
     for b in barrels_delivered:
-        if b.potion_type[1] == 1:
+        if b.potion_type[0] == 1:
             barrels_types[0] += b.ml_per_barrel
             ml += b.ml_per_barrel
             gold -= b.price
@@ -65,9 +65,9 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET ml = {ml} WHERE id= 1"))
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= red"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= green"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= blue"))
+        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= 'red'"))
+        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[1]} WHERE barrel_type= 'green'"))
+        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrels_types[2]} WHERE barrel_type= 'blue'"))
 
 
 

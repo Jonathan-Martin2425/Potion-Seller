@@ -147,27 +147,25 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     # checks if customer wanted to  buy something
-    print(cart_checkout.payment)
-    payment = int(cart_checkout.payment)
-    if payment > 0:
-        with db.engine.begin() as connection:
-            # gets attributes from global inventory table
-            total_potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
-            gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
+    with db.engine.begin() as connection:
+        # gets attributes from global inventory table
+        total_potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
+        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
 
-            # gets data from cart order and potions table
-            res1 = connection.execute(sqlalchemy.text("SELECT potion_type, quantity FROM potions "
-                                                     "ORDER BY id ASC"))
-            potion_types = []
-            for item in res1:
-                potion_types.append(item[1])
-            res2 = connection.execute(sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE id= {cart_id}"))
-            order = []
-            for item in res2:
-                order.append(item)
+        # gets data from cart order and potions table
+        res1 = connection.execute(sqlalchemy.text("SELECT potion_type, quantity FROM potions "
+                                                 "ORDER BY id ASC"))
+        potion_types = []
+        for item in res1:
+            potion_types.append(item[1])
+        res2 = connection.execute(sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE cart_id= {cart_id}"))
+        order = []
+        for item in res2:
+            order.append(item)
 
+        if order[0][1] > 0:
             # updates global_inventory attributes
-            gold += int(cart_checkout.payment)
+            gold += 40
             total_potions -= 1
 
             # updates potion table variables depending on the order's item_sku and quantity
@@ -178,17 +176,19 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             elif order[0][0] == "BLUE_POTION":
                 potion_types[2] -= order[0][1]
 
-            # updates changes to supabase
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
-            connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {total_potions} WHERE id= 1"))
-            connection.execute(
-                sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[0]} WHERE potion_type= 'red'"))
-            connection.execute(
-                sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[1]} WHERE potion_type= 'green'"))
-            connection.execute(
-                sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[2]} WHERE potion_type= 'blue'"))
+        # updates changes to supabase
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {total_potions} WHERE id= 1"))
+        connection.execute(
+            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[0]} WHERE potion_type= 'red'"))
+        connection.execute(
+            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[1]} WHERE potion_type= 'green'"))
+        connection.execute(
+            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[2]} WHERE potion_type= 'blue'"))
 
-        # gives receipt back to customer as response
-        return cart_json(1, payment)
+    # gives receipt back to customer as response
+
+    if order[0][1] > 0:
+        return cart_json(1, 40)
     else:
         return cart_json()

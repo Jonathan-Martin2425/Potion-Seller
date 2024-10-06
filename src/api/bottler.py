@@ -31,19 +31,19 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
         # get number of ml for each type
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= red")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'red'")).scalar())
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= green")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'green'")).scalar())
         barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= blue")).scalar())
+            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'blue'")).scalar())
 
         # get quantity of all potion types
         potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= red")).scalar())
+            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'red'")).scalar())
         potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= green")).scalar())
+            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'green'")).scalar())
         potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= blue")).scalar())
+            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'blue'")).scalar())
 
     # iterates through potions delivered and adds or subtracts attributes
     # according to the potions type
@@ -70,19 +70,19 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
         # updates quantity of all potion types
         connection.execute(sqlalchemy.text(
-            f"UPDATE potions SET quantity = {potion_types[0]} WHERE potion_type= red"))
+            f"UPDATE potions SET quantity = {potion_types[0]} WHERE potion_type= 'red'"))
         connection.execute(sqlalchemy.text(
-            f"UPDATE potions SET quantity = {potion_types[1]} WHERE potion_type= green"))
+            f"UPDATE potions SET quantity = {potion_types[1]} WHERE potion_type= 'green'"))
         connection.execute(sqlalchemy.text(
-            f"UPDATE potions SET quantity = {potion_types[2]} WHERE potion_type= blue"))
+            f"UPDATE potions SET quantity = {potion_types[2]} WHERE potion_type= 'blue'"))
 
         # updates quantity of ml for all types
         connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= red"))
+            f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= 'red'"))
         connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[1]} WHERE barrel_type= green"))
+            f"UPDATE barrels SET ml = {barrels_types[1]} WHERE barrel_type= 'green'"))
         connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[2]} WHERE barrel_type= blue"))
+            f"UPDATE barrels SET ml = {barrels_types[2]} WHERE barrel_type= 'blue'"))
 
     return []
 

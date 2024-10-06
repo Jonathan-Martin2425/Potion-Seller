@@ -147,8 +147,8 @@ class CartCheckout(BaseModel):
 def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     # checks if customer wanted to  buy something
-    payment = float(cart_checkout.payment)
-    print(payment)
+    print(cart_checkout.payment)
+    payment = int(cart_checkout.payment)
     if payment > 0:
         with db.engine.begin() as connection:
             # gets attributes from global inventory table
@@ -189,6 +189,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[2]} WHERE potion_type= 'blue'"))
 
         # gives receipt back to customer as response
-        return cart_json(1, int(cart_checkout.payment))
+        return cart_json(1, payment)
     else:
         return cart_json()

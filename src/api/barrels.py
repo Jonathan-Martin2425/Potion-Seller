@@ -101,6 +101,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
             if barrel.potion_type[i] == 1 and gold >= barrel.price and\
                     (min_ml == i or gold >= barrel.price * 2):
                 potion_skus[i] = barrel.sku
+                barrel_types[i] += barrel.ml_per_barrel
                 gold -= barrel.price
     res = []
 

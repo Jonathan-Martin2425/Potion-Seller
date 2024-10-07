@@ -101,13 +101,6 @@ def post_visits(visit_id: int, customers: list[Customer]):
     """
     Which customers visited the shop today?
     """
-    with db.engine.begin() as connection:
-        res = connection.execute(sqlalchemy.text("SELECT potion_type, quantity FROM potions "
-                                                 "ORDER BY id ASC"))
-    potion_types = []
-    for item in res:
-        potion_types.append(item)
-    print(potion_types[0][1])
     print(customers)
 
     return "OK"

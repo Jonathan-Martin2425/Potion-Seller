@@ -71,7 +71,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     # updates potions gained and potential green ml lost in creation of potions
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {potions} WHERE id= 1"))
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {ml} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET ml = {ml} WHERE id= 1"))
 
         # updates quantity of all potion types
         connection.execute(sqlalchemy.text(

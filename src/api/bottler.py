@@ -22,7 +22,7 @@ class PotionInventory(BaseModel):
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
     """ """
-    print(f"potions delievered: {potions_delivered} order_id: {order_id}")
+    print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
     barrels_types = []
     potion_types = []
@@ -31,39 +31,22 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
         ml = connection.execute(sqlalchemy.text("SELECT ml FROM global_inventory")).scalar()
 
         # get number of ml for each type
-        barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'red'")).scalar())
-        barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'green'")).scalar())
-        barrels_types.append(
-            connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'blue'")).scalar())
+        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
+            barrels_types.append(t[0])
 
         # get quantity of all potion types
-        potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'red'")).scalar())
-        potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'green'")).scalar())
-        potion_types.append(
-            connection.execute(sqlalchemy.text("SELECT quantity FROM potions WHERE potion_type= 'blue'")).scalar())
+        for t in connection.execute(sqlalchemy.text("SELECT quantity FROM potions ORDER BY id ASC")):
+            potion_types.append(t[0])
 
     # iterates through potions delivered and adds or subtracts attributes
     # according to the potions type
     for b in potions_delivered:
-        if b.potion_type[0] == 100 and b.quantity > 0:
-            potions += b.quantity
-            ml -= POTION_TO_ML
-            barrels_types[0] -= POTION_TO_ML
-            potion_types[0] += b.quantity
-        if b.potion_type[1] == 100 and b.quantity > 0:
-            potions += b.quantity
-            ml -= POTION_TO_ML
-            barrels_types[1] -= POTION_TO_ML
-            potion_types[1] += b.quantity
-        if b.potion_type[2] == 100 and b.quantity > 0:
-            potions += b.quantity
-            ml -= POTION_TO_ML
-            potion_types[2] += b.quantity
-            barrels_types[2] -= POTION_TO_ML
+        for i in range(3):
+            if b.potion_type[i] == 100 and b.quantity > 0:
+                potions += b.quantity
+                ml -= POTION_TO_ML
+                barrels_types[i] -= POTION_TO_ML
+                potion_types[i] += b.quantity
 
     # what does "OK" do in a Json package/SQL excecution
     # ANSWER: "OK" tells the reciever that no error occurred
@@ -103,24 +86,24 @@ def get_bottle_plan():
     # Expressed in integers from 1 to 100 that must sum up to 100.
 
     # gets potion amounts and ml amounts
+    barrel_types = []
     with db.engine.begin() as connection:
         potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
-        redMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'red'")).scalar()
-        greenMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'green'")).scalar()
-        blueMl = connection.execute(sqlalchemy.text("SELECT ml FROM barrels WHERE barrel_type= 'blue'")).scalar()
+        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
+            barrel_types.append(t[0])
 
     res = []
     # checks if potion capacity has been reached to add potions
     if potions <= 82:
 
         # adds correct potion if there is enough ml of it
-        if redMl >= 100:
+        if barrel_types[0] >= 100:
             res.append({"potion_type": [100, 0, 0, 0],
                         "quantity": 1})
-        if greenMl >= 100 != "":
+        if barrel_types[1] >= 100 != "":
             res.append({"potion_type": [0, 100, 0, 0],
                         "quantity": 1})
-        if blueMl >= 100 != "":
+        if barrel_types[2] >= 100 != "":
             res.append({"potion_type": [0, 0, 100, 0],
                         "quantity": 1})
     return res

@@ -20,7 +20,7 @@ with db.engine.begin() as connection:
 
 # takes parameters for correct API response
 # returns correct json format
-def cart_json(num_potions: int, payment: int):
+def cart_json(num_potions: int = None, payment: int = None):
     if num_potions is not None and payment is not None:
         return {"total_potions_bought": num_potions,
                 "total_gold_paid": payment}
@@ -142,15 +142,14 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     # checks if customer wanted to  buy something
     with db.engine.begin() as connection:
         # gets attributes from global inventory table
-        total_potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
-        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
+        for i in connection.execute(sqlalchemy.text("SELECT potions, gold FROM global_inventory")):
+            total_potions, gold = i
 
         # gets data from cart order and potions table
-        res1 = connection.execute(sqlalchemy.text("SELECT potion_type, quantity FROM potions "
-                                                 "ORDER BY id ASC"))
+        res1 = connection.execute(sqlalchemy.text("SELECT quantity FROM potions ORDER BY id ASC"))
         potion_types = []
         for item in res1:
-            potion_types.append(item[1])
+            potion_types.append(item[0])
         res2 = connection.execute(sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE cart_id= {cart_id}"))
         order = []
         for item in res2:
@@ -170,8 +169,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 potion_types[2] -= order[0][1]
 
         # updates changes to supabase
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold} WHERE id= 1"))
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {total_potions} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold}, potions = {total_potions} WHERE id= 1"))
         connection.execute(
             sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[0]} WHERE potion_type= 'red'"))
         connection.execute(

@@ -1,8 +1,27 @@
 from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
+import math
 
 router = APIRouter()
+
+
+def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type: list):
+    multiplier = 1
+    if sale_type == "single":
+        cur_quantity = 1
+        cur_name = name
+    elif sale_type == 'bulk':
+        cur_quantity = quantity
+        cur_name = name + " bulk"
+        multiplier = math.floor(multiplier * cur_quantity * 0.9)
+    return {
+        "sku": sku,
+        "name": cur_name,
+        "quantity": cur_quantity,
+        "price": 40 * multiplier,
+        "potion_type": potion_type,
+    }
 
 
 @router.get("/catalog/", tags=["catalog"])
@@ -11,6 +30,8 @@ def get_catalog():
     Each unique item combination must have only a single price.
     """
     res = []
+    potion_skus = ["RED_POTION", "GREEN_POTION", "BLUE_POTION"]
+    potion_names = ["red potion", "green potion", "blue potion"]
     with db.engine.begin() as connection:
 
         # checks quantity of all potion types and adds
@@ -18,29 +39,11 @@ def get_catalog():
         potion_types = []
         for t in connection.execute(sqlalchemy.text("SELECT quantity FROM potions ORDER BY id ASC")):
             potion_types.append(t[0])
-        if potion_types[0] > 0:
-            res.append({
-                    "sku": "RED_POTION",
-                    "name": "red potion",
-                    "quantity": 1,
-                    "price": 40,
-                    "potion_type": [100, 0, 0, 0],
-                })
-        if potion_types[1] > 0:
-            res.append({
-                    "sku": "GREEN_POTION",
-                    "name": "green potion",
-                    "quantity": 1,
-                    "price": 40,
-                    "potion_type": [0, 100, 0, 0],
-                })
-        if potion_types[2] > 0:
-            res.append({
-                    "sku": "BLUE_POTION",
-                    "name": "blue potion",
-                    "quantity": 1,
-                    "price": 40,
-                    "potion_type": [0, 0, 100, 0],
-                })
-
+        for i in range(3):
+            if potion_types[i] > 0:
+                cur_potion_type = [0] * 4
+                cur_potion_type[i] += 100
+                res.append(catalog_json("single", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
+                if potion_types[i] > 1:
+                    res.append(catalog_json("bulk", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
     return res

@@ -14,7 +14,10 @@ def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type
     elif sale_type == 'bulk':
         cur_quantity = quantity
         cur_name = name + " bulk"
-        multiplier = math.floor(multiplier * cur_quantity * 0.9)
+        if cur_quantity >= 5:
+            multiplier = math.floor(multiplier * cur_quantity * 0.9)
+        else:
+            multiplier = multiplier * cur_quantity
     return {
         "sku": sku,
         "name": cur_name,

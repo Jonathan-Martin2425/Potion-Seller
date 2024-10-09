@@ -27,8 +27,8 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     barrels_types = []
     potion_types = []
     with db.engine.begin() as connection:
-        potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
-        ml = connection.execute(sqlalchemy.text("SELECT ml FROM global_inventory")).scalar()
+        for t in connection.execute(sqlalchemy.text("SELECT potions, ml FROM global_inventory")):
+            potions, ml = t
 
         # get number of ml for each type
         for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
@@ -53,8 +53,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
     # updates potions gained and potential green ml lost in creation of potions
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {potions} WHERE id= 1"))
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET ml = {ml} WHERE id= 1"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET potions = {potions}, ml = {ml} WHERE id= 1"))
 
         # updates quantity of all potion types
         connection.execute(sqlalchemy.text(

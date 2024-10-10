@@ -8,18 +8,20 @@ router = APIRouter()
 
 def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type: list):
     multiplier = 1
+    cur_name = name
+    cur_sku = sku
     if sale_type == "single":
         cur_quantity = 1
-        cur_name = name
     elif sale_type == 'bulk':
         cur_quantity = quantity
-        cur_name = name + " bulk"
+        cur_name += " bulk"
+        cur_sku += "_BULK"
         if cur_quantity >= 5:
             multiplier = math.floor(multiplier * cur_quantity * 0.9)
         else:
             multiplier = multiplier * cur_quantity
     return {
-        "sku": sku,
+        "sku": cur_sku,
         "name": cur_name,
         "quantity": cur_quantity,
         "price": 40 * multiplier,

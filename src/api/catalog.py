@@ -17,14 +17,14 @@ def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type
         cur_name += " bulk"
         cur_sku += "_BULK"
         if cur_quantity >= 5:
-            multiplier = math.floor(multiplier * cur_quantity * 0.9)
+            multiplier = 4
         else:
-            multiplier = multiplier * cur_quantity
+            multiplier = multiplier * cur_quantity - 0.5
     return {
         "sku": cur_sku,
         "name": cur_name,
         "quantity": cur_quantity,
-        "price": 40 * multiplier,
+        "price": int(40 * multiplier),
         "potion_type": potion_type,
     }
 
@@ -48,7 +48,13 @@ def get_catalog():
             if potion_types[i] > 0:
                 cur_potion_type = [0] * 4
                 cur_potion_type[i] += 100
-                res.append(catalog_json("single", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
                 if potion_types[i] > 1:
-                    res.append(catalog_json("bulk", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
+                    if potion_types[i] >= 5:
+                        res.append(catalog_json("bulk", 5, potion_skus[i], potion_names[i], cur_potion_type))
+                    else:
+                        res.append(catalog_json("bulk", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
+                else:
+                    res.append(
+                        catalog_json("single", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
+
     return res

@@ -24,7 +24,7 @@ def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type
         "sku": cur_sku,
         "name": cur_name,
         "quantity": cur_quantity,
-        "price": int(40 * multiplier),
+        "price": int(50 * multiplier),
         "potion_type": potion_type,
     }
 

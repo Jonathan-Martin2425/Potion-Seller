@@ -70,7 +70,6 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             f"UPDATE barrels SET ml = {barrels_types[1]} WHERE barrel_type= 'green'"))
         connection.execute(sqlalchemy.text(
             f"UPDATE barrels SET ml = {barrels_types[2]} WHERE barrel_type= 'blue'"))
-
     return []
 
 

@@ -156,8 +156,9 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             order.append(item)
 
         if order[0][1] > 0:
+            print("Payment type: " + cart_checkout.payment)
+
             # updates global_inventory attributes
-            print(cart_checkout.payment)
             if order[0][1] >= 5:
                 new_payment = 50 * 4
             elif order[0][1] > 1:
@@ -168,11 +169,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             total_potions -= order[0][1]
 
             # updates potion table variables depending on the order's item_sku and quantity
-            if order[0][0] == "RED_POTION":
+            if "RED_POTION" in order[0][0]:
                 potion_types[0] -= order[0][1]
-            elif order[0][0] == "GREEN_POTION":
+            elif "GREEN_POTION" in order[0][0]:
                 potion_types[1] -= order[0][1]
-            elif order[0][0] == "BLUE_POTION":
+            elif "BLUE_POTION" in order[0][0]:
                 potion_types[2] -= order[0][1]
 
         # updates changes to supabase
@@ -185,7 +186,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[2]} WHERE potion_type= 'blue'"))
 
     # gives receipt back to customer as response
-
     if order[0][1] > 0:
         return cart_json(order[0][1], new_payment)
     else:

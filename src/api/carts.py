@@ -129,6 +129,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
         connection.execute(sqlalchemy.text(f"UPDATE cart_orders "
                                            f"SET item_sku= '{item_sku}', quantity= {cart_item.quantity} "
                                            f"WHERE cart_id= {cart_id}"))
+    print("Set Quantity: " + str(cart_item.quantity))
     return "OK"
 
 
@@ -167,6 +168,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
                 new_payment = 50
             gold += new_payment
             total_potions -= order[0][1]
+            print("new_payment: " + str(new_payment))
 
             # updates potion table variables depending on the order's item_sku and quantity
             if "RED_POTION" in order[0][0]:

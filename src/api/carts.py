@@ -158,7 +158,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         if order[0][1] > 0:
             # updates global_inventory attributes
             print(cart_checkout.payment)
-            if potion_types[i] >= 5:
+            if order[0][1] >= 5:
                 gold += 50 * 4
             elif order[0][1] > 1:
                 gold += int(50 * (order[0][1] - 0.5))

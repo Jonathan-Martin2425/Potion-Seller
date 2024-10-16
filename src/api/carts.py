@@ -161,14 +161,13 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
             # updates global_inventory attributes
             if order[0][1] >= 5:
-                new_payment = 50 * 4
+                new_cost = 100 - 25
             elif order[0][1] > 1:
-                new_payment = int(50 * (order[0][1] - 0.5))
+                new_cost = 100 - 5 * order[0][1]
             elif order[0][1] == 1:
-                new_payment = 50
-            gold += new_payment
+                new_cost = 100
+            gold += new_cost * order[0][1]
             total_potions -= order[0][1]
-            print("new_payment: " + str(new_payment))
 
             # updates potion table variables depending on the order's item_sku and quantity
             if "RED_POTION" in order[0][0]:
@@ -189,6 +188,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
     # gives receipt back to customer as response
     if order[0][1] > 0:
-        return cart_json(order[0][1], new_payment)
+        return cart_json(order[0][1], new_cost * order[0][1])
     else:
         return cart_json()

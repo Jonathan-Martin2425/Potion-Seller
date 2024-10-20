@@ -6,25 +6,14 @@ import math
 router = APIRouter()
 
 
-def catalog_json(sale_type: str, quantity: int, sku: str, name: str, potion_type: list):
+def catalog_json(quantity: int, sku: str, name: str, potion_type: list):
     cur_name = name
     cur_sku = sku
-    if sale_type == "single":
-        cur_quantity = 1
-        discount = 0
-    elif sale_type == 'bulk':
-        cur_quantity = quantity
-        cur_name += " bulk"
-        cur_sku += "_BULK"
-        if cur_quantity >= 5:
-            discount = 25
-        else:
-            discount = cur_quantity * 5
     return {
         "sku": cur_sku,
         "name": cur_name,
-        "quantity": cur_quantity,
-        "price": int(100 - discount),
+        "quantity": quantity,
+        "price": 100,
         "potion_type": potion_type,
     }
 
@@ -48,13 +37,6 @@ def get_catalog():
             if potion_types[i] > 0:
                 cur_potion_type = [0] * 4
                 cur_potion_type[i] += 100
-                if potion_types[i] > 1:
-                    if potion_types[i] >= 5:
-                        res.append(catalog_json("bulk", 5, potion_skus[i], potion_names[i], cur_potion_type))
-                    else:
-                        res.append(catalog_json("bulk", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
-                else:
-                    res.append(
-                        catalog_json("single", potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
+                res.append(catalog_json(potion_types[i], potion_skus[i], potion_names[i], cur_potion_type))
 
     return res

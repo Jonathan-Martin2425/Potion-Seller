@@ -66,9 +66,12 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
 
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET ml = {ml}, gold = {gold} WHERE id= 1"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrel_types[0]} WHERE barrel_type= 'red'"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrel_types[1]} WHERE barrel_type= 'green'"))
-        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = {barrel_types[2]} WHERE barrel_type= 'blue'"))
+        connection.execute(
+            sqlalchemy.text(f"UPDATE barrels SET ml = CASE barrel_type WHEN 'red' THEN {barrel_types[0]} "
+                            f"WHEN 'green' THEN {barrel_types[1]} "
+                            f"WHEN 'blue' THEN {barrel_types[2]} "
+                            f"ELSE ml END "
+                            f"WHERE barrel_type IN ('red', 'green', 'blue')"))
 
     return []
 

@@ -160,13 +160,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             print("Payment type: " + cart_checkout.payment)
 
             # updates global_inventory attributes
-            if order[0][1] >= 5:
-                new_cost = 100 - 25
-            elif order[0][1] > 1:
-                new_cost = 100 - 5 * order[0][1]
-            elif order[0][1] == 1:
-                new_cost = 100
-            gold += new_cost * order[0][1]
+            gold += 100 * order[0][1]
             total_potions -= order[0][1]
 
             # updates potion table variables depending on the order's item_sku and quantity
@@ -180,12 +174,11 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # updates changes to supabase
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold}, potions = {total_potions} WHERE id= 1"))
         connection.execute(
-            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[0]} WHERE potion_type= 'red'"))
-        connection.execute(
-            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[1]} WHERE potion_type= 'green'"))
-        connection.execute(
-            sqlalchemy.text(f"UPDATE potions SET quantity= {potion_types[2]} WHERE potion_type= 'blue'"))
-
+            sqlalchemy.text(f"UPDATE potions SET quantity = CASE potion_type WHEN 'red' THEN {potion_types[0]} "
+                            f"WHEN 'green' THEN {potion_types[1]} "
+                            f"WHEN 'blue' THEN {potion_types[2]} "  
+                            f"ELSE quantity END "
+                            f"WHERE potion_type IN ('red', 'green', 'blue')"))
     # gives receipt back to customer as response
     if order[0][1] > 0:
         return cart_json(order[0][1], new_cost * order[0][1])

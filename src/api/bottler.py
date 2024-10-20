@@ -24,7 +24,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
     """ """
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
 
-    barrels_types = []
+    barrel_types = []
     potion_types = []
     with db.engine.begin() as connection:
         for t in connection.execute(sqlalchemy.text("SELECT potions, ml FROM global_inventory")):
@@ -32,7 +32,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
 
         # get number of ml for each type
         for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
-            barrels_types.append(t[0])
+            barrel_types.append(t[0])
 
         # get quantity of all potion types
         for t in connection.execute(sqlalchemy.text("SELECT quantity FROM potions ORDER BY id ASC")):
@@ -45,7 +45,7 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             if b.potion_type[i] == 100 and b.quantity > 0:
                 potions += b.quantity
                 ml -= POTION_TO_ML
-                barrels_types[i] -= POTION_TO_ML
+                barrel_types[i] -= POTION_TO_ML
                 potion_types[i] += b.quantity
 
     # what does "OK" do in a Json package/SQL excecution
@@ -64,12 +64,12 @@ def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int
             f"UPDATE potions SET quantity = {potion_types[2]} WHERE potion_type= 'blue'"))
 
         # updates quantity of ml for all types
-        connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[0]} WHERE barrel_type= 'red'"))
-        connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[1]} WHERE barrel_type= 'green'"))
-        connection.execute(sqlalchemy.text(
-            f"UPDATE barrels SET ml = {barrels_types[2]} WHERE barrel_type= 'blue'"))
+        connection.execute(
+            sqlalchemy.text(f"UPDATE barrels SET ml = CASE barrel_type WHEN 'red' THEN {barrel_types[0]} "
+                            f"WHEN 'green' THEN {barrel_types[1]} "
+                            f"WHEN 'blue' THEN {barrel_types[2]} "
+                            f"ELSE ml END "
+                            f"WHERE barrel_type IN ('red', 'green', 'blue')"))
     return []
 
 

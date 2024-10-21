@@ -44,8 +44,8 @@ class Potion:
 def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
     quantity_per_ml = []
     for i in range(len(mls)):
-        if potion_type[i] != 0:
-            possible_quantity = math.floor(mls[i] / potion_type[i])
+        if potion_type[i] != 0 and mls[i] > 100:
+            possible_quantity = math.floor((mls[i] - 100) / potion_type[i])
             if possible_quantity > 5:
                 quantity = 5
             else:

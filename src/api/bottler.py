@@ -44,12 +44,18 @@ class Potion:
 def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
     quantity_per_ml = []
     for i in range(len(mls)):
-        if potion_type[i] != 0 and mls[i] > 100:
+        if potion_type[i] != 0:
             possible_quantity = math.floor((mls[i] - 100) / potion_type[i])
             if possible_quantity > 5:
                 quantity = 5
             else:
                 quantity = possible_quantity
+
+            # if quantity is 0, then no potions can be made
+            # since this color is required to make the potion
+            # returns quantity 0 and no changes to mls, otherwise appends possible quantity
+            if quantity == 0:
+                return [0, mls[0], mls[1], mls[2]]
             quantity_per_ml.append(quantity)
         else:
             quantity_per_ml.append(100)
@@ -163,7 +169,7 @@ def get_bottle_plan():
             # checks how much of potion we can make depending on
             # amount of ml and changes barrels accordingly
             possible_quantity = check_ml(barrel_types, p.type_list)
-            if possible_quantity[0] > 0:
+            if possible_quantity[0] > 0 and possible_quantity[0] != 100:
                 for i in range(len(barrel_types)):
                     barrel_types[i] = possible_quantity[i + 1]
                 res.append({"potion_type": p.type_list,

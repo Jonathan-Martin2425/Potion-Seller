@@ -54,7 +54,7 @@ def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
             # if quantity is 0, then no potions can be made
             # since this color is required to make the potion
             # returns quantity 0 and no changes to mls, otherwise appends possible quantity
-            if quantity == 0:
+            if quantity <= 0:
                 return [0, mls[0], mls[1], mls[2]]
             quantity_per_ml.append(quantity)
         else:

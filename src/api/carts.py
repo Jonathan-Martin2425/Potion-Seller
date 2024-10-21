@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 with db.engine.begin() as connection:
-    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC"))
+    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_items ORDER BY cart_id DESC"))
     for res in result:
         cur_cart_id = res[0] + 1
         break
@@ -137,7 +137,7 @@ def create_cart(new_cart: Customer):
     temp = cur_cart_id
     cur_cart_id = cur_cart_id + 1
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"INSERT INTO cart_orders (cart_id) VALUES ({temp})"))
+        connection.execute(sqlalchemy.text(f"INSERT INTO cart_items (cart_id) VALUES ({temp})"))
     return {"cart_id": temp}
 
 
@@ -150,7 +150,7 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ takes requested potion and ammount(CartItem)
         and sets their order in supabase using their ID"""
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"UPDATE cart_orders "
+        connection.execute(sqlalchemy.text(f"UPDATE cart_items "
                                            f"SET item_sku= '{item_sku}', quantity= {cart_item.quantity} "
                                            f"WHERE cart_id= {cart_id}"))
     print("Set Quantity: " + str(cart_item.quantity))
@@ -180,7 +180,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # gets order from order id
         order = []
         for item in connection.execute(
-                sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE cart_id= {cart_id}")):
+                sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_items WHERE cart_id= {cart_id}")):
             order.append(item)
 
         if order[0][1] > 0:

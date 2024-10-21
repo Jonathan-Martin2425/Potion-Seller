@@ -96,6 +96,30 @@ class Customer(BaseModel):
     level: int
 
 
+# Represents a potion's attributes per row on the potions table
+class Potion:
+    sku: str
+    quantity: int
+    type_list: list[int]
+    name: str
+
+    def __init__(self, sku: str, name: str, quantity: int, type_list: list[int]):
+        self.sku = sku
+        self.name = name
+        self.quantity = quantity
+        self.type_list = type_list
+
+    def __repr__(self):
+        return "Sku: " + self.sku + " Name: " + self.name + " quantity: " + str(self.quantity) + " type: " + str(
+            self.type_list)
+
+
+# creates case for specific potion type when updating potions
+def potion_update(potion_type: list[int], new_quantity: int):
+    return f"WHEN r = {potion_type[0]} AND g = {potion_type[1]} AND " \
+           f"b = {potion_type[2]} AND d = {potion_type[3]} THEN {new_quantity} \n"
+
+
 @router.post("/visits/{visit_id}")
 def post_visits(visit_id: int, customers: list[Customer]):
     """
@@ -146,14 +170,17 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         for i in connection.execute(sqlalchemy.text("SELECT potions, gold FROM global_inventory")):
             total_potions, gold = i
 
-        # gets data from cart order and potions table
-        res1 = connection.execute(sqlalchemy.text("SELECT quantity FROM potions ORDER BY id ASC"))
+        # gets all potion types
         potion_types = []
-        for item in res1:
-            potion_types.append(item[0])
-        res2 = connection.execute(sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE cart_id= {cart_id}"))
+        for t in connection.execute(
+                sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY id ASC")):
+            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
+            potion_types.append(p)
+
+        # gets order from order id
         order = []
-        for item in res2:
+        for item in connection.execute(
+                sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_orders WHERE cart_id= {cart_id}")):
             order.append(item)
 
         if order[0][1] > 0:
@@ -163,24 +190,23 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             gold += 100 * order[0][1]
             total_potions -= order[0][1]
 
-            # updates potion table variables depending on the order's item_sku and quantity
-            if "RED_POTION" in order[0][0]:
-                potion_types[0] -= order[0][1]
-            elif "GREEN_POTION" in order[0][0]:
-                potion_types[1] -= order[0][1]
-            elif "BLUE_POTION" in order[0][0]:
-                potion_types[2] -= order[0][1]
+            # updates potion quantity ordered depending on the order's item_sku
+            for i in range(len(potion_types)):
+                if potion_types[i].sku == order[0][0]:
+                    potion_types[i].quantity -= order[0][1]
 
-        # updates changes to supabase
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold}, potions = {total_potions} WHERE id= 1"))
+        # updates global inventory attributes
         connection.execute(
-            sqlalchemy.text(f"UPDATE potions SET quantity = CASE potion_type WHEN 'red' THEN {potion_types[0]} "
-                            f"WHEN 'green' THEN {potion_types[1]} "
-                            f"WHEN 'blue' THEN {potion_types[2]} "  
-                            f"ELSE quantity END "
-                            f"WHERE potion_type IN ('red', 'green', 'blue')"))
+            sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold}, potions = {total_potions} WHERE id= 1"))
+
+        # updates quantity of all potion types
+        potion_sql = "UPDATE potions SET quantity = CASE "
+        for p in potion_types:
+            potion_sql += potion_update(p.type_list, p.quantity)
+        potion_sql += "ELSE quantity END WHERE quantity > -1"
+        connection.execute(sqlalchemy.text(potion_sql))
     # gives receipt back to customer as response
     if order[0][1] > 0:
-        return cart_json(order[0][1], new_cost * order[0][1])
+        return cart_json(order[0][1], 100 * order[0][1])
     else:
         return cart_json()

@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 with db.engine.begin() as connection:
-    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_items ORDER BY cart_id DESC"))
+    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC"))
     for res in result:
         cur_cart_id = res[0] + 1
         break
@@ -137,7 +137,9 @@ def create_cart(new_cart: Customer):
     temp = cur_cart_id
     cur_cart_id = cur_cart_id + 1
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"INSERT INTO cart_items (cart_id) VALUES ({temp})"))
+        connection.execute(sqlalchemy.text(f"INSERT INTO cart_orders (cart_id, name, class, level) "
+                                           f"VALUES ({temp}, '{new_cart.customer_name}', "
+                                           f"'{new_cart.character_class}', {new_cart.level})"))
     return {"cart_id": temp}
 
 
@@ -149,10 +151,13 @@ class CartItem(BaseModel):
 def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     """ takes requested potion and ammount(CartItem)
         and sets their order in supabase using their ID"""
+
+    # creates cart item of given cart_id into cart_items table
+    # where the cart_id and item_sku work as the 2 foreign keys for
+    # cart_orders and potions tables respectively
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"UPDATE cart_items "
-                                           f"SET item_sku= '{item_sku}', quantity= {cart_item.quantity} "
-                                           f"WHERE cart_id= {cart_id}"))
+        connection.execute(sqlalchemy.text(f"INSERT INTO cart_items (cart_id, item_sku, quantity) "
+                                           f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"))
     print("Set Quantity: " + str(cart_item.quantity))
     return "OK"
 

@@ -20,6 +20,22 @@ class Barrel(BaseModel):
 
     quantity: int
 
+class Potion:
+    sku: str
+    quantity: int
+    type_list: list[int]
+    name: str
+
+    def __init__(self, sku: str, name: str, quantity: int, type_list: list[int]):
+        self.sku = sku
+        self.name = name
+        self.quantity = quantity
+        self.type_list = type_list
+
+    def __repr__(self):
+        return "Sku: " + self.sku + " Name: " + self.name + " quantity: " + str(self.quantity) + " type: " + str(
+            self.type_list)
+
 
 # given the parameters for the correct API response
 # returns the correct json format
@@ -30,11 +46,11 @@ def barrel_json(item_sku: str, quantity: int):
 
 # takes in a list and returns the min index
 # used for finding min ml of all barrel types
-def min_barrels(barrel_types: list) -> int:
+def min_barrels(barrel_types: list, max_potion: int) -> int:
     m = 0
     cur = 0
     for t in barrel_types:
-        if barrel_types[m] > t:
+        if barrel_types[m] > t and cur != max_potion:
             m = cur
         cur += 1
     return m
@@ -83,6 +99,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     print(wholesale_catalog)
 
     barrel_types = []
+    potion_types = []
     with db.engine.begin() as connection:
         for t in connection.execute(sqlalchemy.text("SELECT potions, gold FROM global_inventory")):
             potions, gold = t
@@ -91,12 +108,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
             barrel_types.append(t[0])
 
+        for t in connection.execute(
+                sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions "
+                                "WHERE r = 100 OR g = 100 OR b = 100 ORDER BY id ASC")):
+            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
+            potion_types.append(p)
+
     barrel_skus = [""] * 3
     for barrel in wholesale_catalog:
-        min_ml = min_barrels(barrel_types)
+        max_potion = max(potion_types[0].quantity, potion_types[1].quantity, potion_types[2].quantity)
+        min_ml = min_barrels(barrel_types, max_potion)
         for i in range(3):
             if barrel.potion_type[i] == 1 and gold >= barrel.price and\
-                    (min_ml == i or gold >= barrel.price * 2):
+                    (min_ml == i or gold >= barrel.price * 3):
                 barrel_skus[i] = barrel.sku
 
                 # updates values for deciding what to buy, but doesn't

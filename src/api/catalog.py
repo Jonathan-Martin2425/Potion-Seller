@@ -30,7 +30,7 @@ def catalog_json(quantity: int, sku: str, name: str, potion_type: list):
         "sku": cur_sku,
         "name": cur_name,
         "quantity": quantity,
-        "price": 100,
+        "price": 50,
         "potion_type": potion_type,
     }
 

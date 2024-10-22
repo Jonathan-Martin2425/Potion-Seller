@@ -192,7 +192,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
             print("Payment type: " + cart_checkout.payment)
 
             # updates global_inventory attributes
-            gold += 100 * order[0][1]
+            gold += 50 * order[0][1]
             total_potions -= order[0][1]
 
             # updates potion quantity ordered depending on the order's item_sku
@@ -212,6 +212,6 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         connection.execute(sqlalchemy.text(potion_sql))
     # gives receipt back to customer as response
     if order[0][1] > 0:
-        return cart_json(order[0][1], 100 * order[0][1])
+        return cart_json(order[0][1], 50 * order[0][1])
     else:
         return cart_json()

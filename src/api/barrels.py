@@ -61,33 +61,30 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
     """ """
     print(f"barrels delivered: {barrels_delivered} order_id: {order_id}")
 
-    barrel_types = []
-    with db.engine.begin() as connection:
-        for t in connection.execute(sqlalchemy.text("SELECT ml, gold FROM global_inventory")):
-            ml, gold = t
-
-        # gets quantity of ml for each type
-        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
-            barrel_types.append(t[0])
+    barrels_dict = [{
+        "ml": 0,
+        "color": 'red'
+    },
+        {
+            "ml": 0,
+            "color": 'green'
+        },
+        {
+            "ml": 0,
+            "color": 'blue'
+        }]
 
     for b in barrels_delivered:
         for i in range(3):
             if b.potion_type[i] == 1:
-                barrel_types[i] += b.ml_per_barrel
-                ml += b.ml_per_barrel
-                gold -= b.price
+                barrels_dict[i]["ml"] += b.ml_per_barrel
 
     # what does "OK" do in a Json package/SQL execution
     # "OK" tells the receiver that no error occurred
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET ml = {ml}, gold = {gold} WHERE id= 1"))
-        connection.execute(
-            sqlalchemy.text(f"UPDATE barrels SET ml = CASE barrel_type WHEN 'red' THEN {barrel_types[0]} "
-                            f"WHEN 'green' THEN {barrel_types[1]} "
-                            f"WHEN 'blue' THEN {barrel_types[2]} "
-                            f"ELSE ml END "
-                            f"WHERE barrel_type IN ('red', 'green', 'blue')"))
+        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = ml + :ml "
+                                           f"WHERE barrel_type = :color"), barrels_dict)
 
     return []
 
@@ -101,17 +98,19 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
     barrel_types = []
     potion_types = []
     with db.engine.begin() as connection:
-        for t in connection.execute(sqlalchemy.text("SELECT potions, gold FROM global_inventory")):
-            potions, gold = t
+        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
 
         # gets quantity of ml for each type
-        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
-            barrel_types.append(t[0])
+        t = connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY barrel_type DESC"))
+        for b in t:
+            barrel_types.append(b.ml)
 
+        total_potions = 0
         for t in connection.execute(
                 sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions "
                                 "WHERE r = 100 OR g = 100 OR b = 100 ORDER BY id ASC")):
-            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
+            p = (Potion(t.potion_sku, t.potion_name, t.quantity, [t.r, t.g, t.b, t.d]))
+            total_potions += p.quantity
             potion_types.append(p)
 
     barrel_skus = [""] * 3
@@ -129,7 +128,7 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 gold -= barrel.price
     res = []
 
-    if potions <= 82:
+    if total_potions < 85:
         if barrel_skus[0] != "":
             res.append(barrel_json(barrel_skus[0], 1))
         if barrel_skus[1] != "":

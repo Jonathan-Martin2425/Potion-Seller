@@ -114,12 +114,6 @@ class Potion:
             self.type_list)
 
 
-# creates case for specific potion type when updating potions
-def potion_update(potion_type: list[int], new_quantity: int):
-    return f"WHEN r = {potion_type[0]} AND g = {potion_type[1]} AND " \
-           f"b = {potion_type[2]} AND d = {potion_type[3]} THEN {new_quantity} \n"
-
-
 @router.post("/visits/{visit_id}")
 def post_visits(visit_id: int, customers: list[Customer]):
     """
@@ -136,10 +130,12 @@ def create_cart(new_cart: Customer):
     global cur_cart_id
     temp = cur_cart_id
     cur_cart_id = cur_cart_id + 1
+    customer_dict = {"name": new_cart.customer_name,
+                     "class": new_cart.character_class,
+                     "level": new_cart.level}
     with db.engine.begin() as connection:
         connection.execute(sqlalchemy.text(f"INSERT INTO cart_orders (cart_id, name, class, level) "
-                                           f"VALUES ({temp}, '{new_cart.customer_name}', "
-                                           f"'{new_cart.character_class}', {new_cart.level})"))
+                                           f"VALUES ({temp}, :name, :class, :level)"), customer_dict)
     return {"cart_id": temp}
 
 
@@ -156,8 +152,9 @@ def set_item_quantity(cart_id: int, item_sku: str, cart_item: CartItem):
     # where the cart_id and item_sku work as the 2 foreign keys for
     # cart_orders and potions tables respectively
     with db.engine.begin() as connection:
+        item_dict = {'id': cart_id, "sku": item_sku, "quantity": cart_item.quantity}
         connection.execute(sqlalchemy.text(f"INSERT INTO cart_items (cart_id, item_sku, quantity) "
-                                           f"VALUES ({cart_id}, '{item_sku}', {cart_item.quantity})"))
+                                           f"VALUES (:id, :sku, :quantity)"), item_dict)
     print("Set Quantity: " + str(cart_item.quantity))
     return "OK"
 
@@ -171,47 +168,26 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
     """ """
     # checks if customer wanted to  buy something
     with db.engine.begin() as connection:
-        # gets attributes from global inventory table
-        for i in connection.execute(sqlalchemy.text("SELECT potions, gold FROM global_inventory")):
-            total_potions, gold = i
-
-        # gets all potion types
-        potion_types = []
-        for t in connection.execute(
-                sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY id ASC")):
-            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
-            potion_types.append(p)
 
         # gets order from order id
-        order = []
-        for item in connection.execute(
-                sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_items WHERE cart_id= {cart_id}")):
-            order.append(item)
-
-        if order[0][1] > 0:
-            print("Payment type: " + cart_checkout.payment)
-
-            # updates global_inventory attributes
-            gold += 50 * order[0][1]
-            total_potions -= order[0][1]
-
-            # updates potion quantity ordered depending on the order's item_sku
-            for i in range(len(potion_types)):
-                if potion_types[i].sku == order[0][0]:
-                    potion_types[i].quantity -= order[0][1]
+        order = connection.execute(
+            sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_items WHERE cart_id= {cart_id}")).one()
 
         # updates global inventory attributes
-        connection.execute(
-            sqlalchemy.text(f"UPDATE global_inventory SET gold = {gold}, potions = {total_potions} WHERE id= 1"))
+        order_dict = {'potions_delivered': order.quantity,
+                      'price': order.quantity * 50}
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold + :price, "
+                                           f"potions = potions - :potions_delivered WHERE id= 1"), order_dict)
 
         # updates quantity of all potion types
-        potion_sql = "UPDATE potions SET quantity = CASE "
-        for p in potion_types:
-            potion_sql += potion_update(p.type_list, p.quantity)
-        potion_sql += "ELSE quantity END WHERE quantity > -1"
-        connection.execute(sqlalchemy.text(potion_sql))
+        potion_dict = {"item_sku": order.item_sku,
+                       "quantity": order.quantity}
+        potion_sql = "UPDATE potions SET quantity = quantity - :quantity WHERE potion_sku = :item_sku"
+        connection.execute(sqlalchemy.text(potion_sql), potion_dict)
+        print("payment: " + cart_checkout.payment)
+
     # gives receipt back to customer as response
-    if order[0][1] > 0:
-        return cart_json(order[0][1], 50 * order[0][1])
+    if order.quantity > 0:
+        return cart_json(order.quantity, 50 * order.quantity)
     else:
         return cart_json()

@@ -27,6 +27,7 @@ def reset():
         connection.execute(sqlalchemy.text("UPDATE barrels SET ml = 0"))
 
         #resets all cart orders, leaving only 1 default as a place holder
+        connection.execute(sqlalchemy.text("DELETE FROM cart_items WHERE NOT cart_id = 1"))
         connection.execute(sqlalchemy.text("DELETE FROM cart_orders WHERE NOT cart_id = 1"))
 
 

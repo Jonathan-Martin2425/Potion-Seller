@@ -5,6 +5,7 @@ import math
 
 router = APIRouter()
 
+
 # Represents a potion's attributes per row on the potions table
 class Potion:
     sku: str
@@ -48,11 +49,12 @@ def get_catalog():
         potion_types = []
         for t in connection.execute(
                 sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY id ASC")):
-            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
+            p = (Potion(t.potion_sku, t.potion_name, t.quantity, [t.r, t.g, t.b, t.d]))
             potion_types.append(p)
         for i in range(len(potion_types)):
             if potion_types[i].quantity > 0:
                 res.append(catalog_json(potion_types[i].quantity, potion_types[i].sku,
                                         potion_types[i].name, potion_types[i].type_list))
-
+            if len(res) == 6:
+                break
     return res

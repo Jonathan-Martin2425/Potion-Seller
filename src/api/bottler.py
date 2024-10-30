@@ -45,7 +45,7 @@ def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
     quantity_per_ml = []
     for i in range(len(mls)):
         if potion_type[i] != 0:
-            possible_quantity = math.floor((mls[i] - 100) / potion_type[i])
+            possible_quantity = math.floor(mls[i] / potion_type[i])
             if possible_quantity > 5:
                 quantity = 5
             else:
@@ -68,67 +68,48 @@ def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
     return res
 
 
-# creates case for specific potion type when updating potions
-def potion_update(potion_type: list[int], new_quantity: int):
-    return f"WHEN r = {potion_type[0]} AND g = {potion_type[1]} AND " \
-           f"b = {potion_type[2]} AND d = {potion_type[3]} THEN {new_quantity} \n"
-
-
 @router.post("/deliver/{order_id}")
 def post_deliver_bottles(potions_delivered: list[PotionInventory], order_id: int):
     """ """
     print(f"potions delivered: {potions_delivered} order_id: {order_id}")
-
-    barrel_types = []
-    potion_types = []
     with db.engine.begin() as connection:
-        for t in connection.execute(sqlalchemy.text("SELECT potions, ml FROM global_inventory")):
-            total_potions, ml = t
 
-        # get number of ml for each type
-        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
-            barrel_types.append(t[0])
+        # iterates through potions delivered and all potion types
+        # then adds or subtracts attributes if they match
+        delivered_dict = []
+        barrels_dict = [{
+            "ml": 0,
+            "color": 'red'
+            },
+            {
+                "ml": 0,
+                "color": 'green'
+            },
+            {
+                "ml": 0,
+                "color": 'blue'
+            }]
+        for b in potions_delivered:
+            delivered_dict.append({
+                "quantity": b.quantity,
+                "r": b.potion_type[0],
+                "g": b.potion_type[1],
+                "b": b.potion_type[2],
+                "d": b.potion_type[3],
+            })
+            for i in range(3):
+                barrels_dict[i]["ml"] += b.potion_type[i] * b.quantity
 
-        # get attributes of all potion types
-        for t in connection.execute(
-                sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY id ASC")):
-            p = (Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
-            potion_types.append(p)
 
-    # iterates through potions delivered and all potion types
-    # then adds or subtracts attributes if they match
-    for b in potions_delivered:
-        for p in potion_types:
-            if b.potion_type == p.type_list and b.quantity > 0:
-                # print("Delivered - " + str(b.potion_type) + "\nActual - " + str(p.type_list))
-                total_potions += b.quantity
-                ml -= POTION_TO_ML * b.quantity
-                p.quantity += b.quantity
-                for i in range(3):
-                    barrel_types[i] -= p.type_list[i] * b.quantity
+        # what does "OK" do in a Json package/SQL execution
+        # ANSWER: "OK" tells the receiver that no error occurred
 
-    # what does "OK" do in a Json package/SQL execution
-    # ANSWER: "OK" tells the receiver that no error occurred
-
-    # updates potions gained and potential green ml lost in creation of potions
-    with db.engine.begin() as connection:
-        connection.execute(
-            sqlalchemy.text(f"UPDATE global_inventory SET potions = {total_potions}, ml = {ml} WHERE id= 1"))
-
-        potion_sql = "UPDATE potions SET quantity = CASE "
-        for p in potion_types:
-            potion_sql += potion_update(p.type_list, p.quantity)
-        potion_sql += "ELSE quantity END WHERE quantity > -1"
-        # updates quantity of all potion types
-        connection.execute(sqlalchemy.text(potion_sql))
+        connection.execute(sqlalchemy.text(f"UPDATE potions SET quantity = quantity + :quantity "
+                                           f"WHERE r = :r AND g = :g AND b = :b AND d = :d"), delivered_dict)
 
         # updates quantity of ml for all types
-        connection.execute(
-            sqlalchemy.text(f"UPDATE barrels SET ml = CASE barrel_type WHEN 'red' THEN {barrel_types[0]} "
-                            f"WHEN 'green' THEN {barrel_types[1]} "
-                            f"WHEN 'blue' THEN {barrel_types[2]} "
-                            f"ELSE ml END "
-                            f"WHERE barrel_type IN ('red', 'green', 'blue')"))
+        connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = ml - :ml "
+                                           f"WHERE barrel_type = :color"), barrels_dict)
     return []
 
 
@@ -146,22 +127,23 @@ def get_bottle_plan():
     barrel_types = []
     potions_types = []
     with db.engine.begin() as connection:
-        total_potions = connection.execute(sqlalchemy.text("SELECT potions FROM global_inventory")).scalar()
+        total_potions = connection.execute(sqlalchemy.text("SELECT SUM(quantity) AS total FROM potions")).scalar()
 
         # gets the 3 barrel types
-        for t in connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")):
-            barrel_types.append(t[0])
+        b = connection.execute(sqlalchemy.text("SELECT ml FROM barrels ORDER BY id ASC")).all()
+        for t in b:
+            barrel_types.append(t.ml)
 
         # gets all potion types and adds them to list of Potion objs
         # orders by quantity to prioritize potions with the lowest quantity
-        for t in connection.execute(
-                sqlalchemy.text(
-                    "SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY quantity ASC")):
-            potions_types.append(Potion(t[0], t[1], t[2], [t[3], t[4], t[5], t[6]]))
+        t = connection.execute(sqlalchemy.text(
+                "SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY quantity ASC")).all()
+        for p in t:
+            potions_types.append(Potion(p.potion_sku, p.potion_name, p.quantity, [p.r, p.g, p.b, p.d]))
 
     res = []
     # checks if potion capacity has been reached to add potions
-    if total_potions <= 82:
+    if total_potions < 85:
 
         # adds correct potion if there is enough ml to make it
         for p in potions_types:
@@ -172,6 +154,13 @@ def get_bottle_plan():
             if possible_quantity[0] > 0 and possible_quantity[0] != 100:
                 for i in range(len(barrel_types)):
                     barrel_types[i] = possible_quantity[i + 1]
+                total_potions += possible_quantity[0]
+                if total_potions > 85:
+                    possible_quantity[0] -= total_potions - 85
+                    if possible_quantity[0] > 0:
+                        res.append({"potion_type": p.type_list,
+                                    "quantity": possible_quantity[0]})
+                    break
                 res.append({"potion_type": p.type_list,
                             "quantity": possible_quantity[0]})
     return res

@@ -73,16 +73,20 @@ def post_deliver_barrels(barrels_delivered: list[Barrel], order_id: int):
             "ml": 0,
             "color": 'blue'
         }]
-
+    gold = 0
     for b in barrels_delivered:
+        gold += b.quantity * b.price
         for i in range(3):
             if b.potion_type[i] == 1:
                 barrels_dict[i]["ml"] += b.ml_per_barrel
+
 
     # what does "OK" do in a Json package/SQL execution
     # "OK" tells the receiver that no error occurred
 
     with db.engine.begin() as connection:
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold - {gold} "
+                                           f"WHERE id = 1"), )
         connection.execute(sqlalchemy.text(f"UPDATE barrels SET ml = ml + :ml "
                                            f"WHERE barrel_type = :color"), barrels_dict)
 

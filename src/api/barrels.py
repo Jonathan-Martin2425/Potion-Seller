@@ -47,13 +47,13 @@ def barrel_json(item_sku: str, quantity: int):
 # takes in a list and returns the min index
 # used for finding min ml of all barrel types
 def min_barrels(barrel_types: list, max_potion: int) -> int:
-    m = 0
+    res = 0
     cur = 0
     for t in barrel_types:
-        if barrel_types[m] > t and cur != max_potion:
-            m = cur
+        if barrel_types[res] > t and cur != max_potion:
+            res = cur
         cur += 1
-    return m
+    return res
 
 
 @router.post("/deliver/{order_id}")

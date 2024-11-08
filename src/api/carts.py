@@ -176,8 +176,7 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
         # updates global inventory attributes
         order_dict = {'potions_delivered': order.quantity,
                       'price': order.quantity * 50}
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold + :price, "
-                                           f"potions = potions - :potions_delivered WHERE id= 1"), order_dict)
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold + :price WHERE id= 1"), order_dict)
 
         # updates quantity of all potion types
         potion_dict = {"item_sku": order.item_sku,

@@ -42,8 +42,8 @@ def get_capacity_plan():
         # if there is enough gold
         if gold > 5000 and p_capacity < 2:
             price = (2 - p_capacity) * 2000
-            new_pCapacity = 2
-            new_bCapacity = 2
+            new_pCapacity = (2 - p_capacity)
+            new_bCapacity = (2 - b_capacity)
         elif gold > 2500 and p_capacity < 1:
             price = (1 - p_capacity) * 2000
             new_pCapacity = 1
@@ -54,9 +54,10 @@ def get_capacity_plan():
             new_bCapacity = 0
 
         # updates global_inventory regardless if a change occurred
+
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold - {price}, "
-                                           f"potion_capacity = {new_pCapacity},"
-                                           f"barrel_capacity = {new_bCapacity}"))
+                                           f"potion_capacity = {p_capacity + new_pCapacity},"
+                                           f"barrel_capacity = {b_capacity + new_bCapacity}"))
         return {
             "potion_capacity": new_pCapacity,
             "ml_capacity": new_bCapacity

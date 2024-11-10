@@ -50,8 +50,8 @@ def get_capacity_plan():
             new_bCapacity = 1
         else:
             price = 0
-            new_pCapacity = p_capacity
-            new_bCapacity = b_capacity
+            new_pCapacity = 0
+            new_bCapacity = 0
 
         # updates global_inventory regardless if a change occurred
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold - {price}, "

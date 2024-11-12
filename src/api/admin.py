@@ -24,8 +24,8 @@ def reset():
         connection.execute(sqlalchemy.text("DELETE FROM barrel_ledger"))
 
         # resets cart order and item tables
-        connection.execute(sqlalchemy.text("DELETE FROM cart_orders WHERE NOT id = 1"))
         connection.execute(sqlalchemy.text("DELETE FROM cart_items WHERE NOT id = 1"))
+        connection.execute(sqlalchemy.text("DELETE FROM cart_orders WHERE NOT id = 1"))
 
         # sets ml and potion capacity back to 0
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET "

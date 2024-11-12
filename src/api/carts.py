@@ -171,18 +171,19 @@ def checkout(cart_id: int, cart_checkout: CartCheckout):
 
         # gets order from order id
         order = connection.execute(
-            sqlalchemy.text(f"SELECT item_sku, quantity FROM cart_items WHERE cart_id= {cart_id}")).one()
+            sqlalchemy.text(f"SELECT name, item_sku, quantity FROM cart_orders "
+                            f"JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id "
+                            f"WHERE cart_orders.cart_id= {cart_id}")).one()
 
-        # updates global inventory attributes
-        order_dict = {'potions_delivered': order.quantity,
-                      'price': order.quantity * 50}
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold + :price WHERE id= 1"), order_dict)
+        # inserts transaction into ledger
+        order_dict = {'price': order.quantity * 50,
+                      'name': order.name,
+                      'quantity': -order.quantity,
+                      'item_sku': order.item_sku,
+                      }
+        connection.execute(sqlalchemy.text(f"INSERT INTO ledger (gold, customer_name, sku, quantity, cart_id) VALUES "
+                                           f"(:price, :name, :item_sku, :quantity, {cart_id})"), order_dict)
 
-        # updates quantity of all potion types
-        potion_dict = {"item_sku": order.item_sku,
-                       "quantity": order.quantity}
-        potion_sql = "UPDATE potions SET quantity = quantity - :quantity WHERE potion_sku = :item_sku"
-        connection.execute(sqlalchemy.text(potion_sql), potion_dict)
         print("payment: " + cart_checkout.payment)
 
     # gives receipt back to customer as response

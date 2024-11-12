@@ -16,10 +16,12 @@ router = APIRouter(
 def get_inventory():
     """ """
     with db.engine.begin() as connection:
-        ml = connection.execute(sqlalchemy.text("SELECT SUM(ml) AS total_ml FROM barrels")).scalar()
-        potions = connection.execute(sqlalchemy.text("SELECT SUM(quantity) AS total_potions FROM potions")).scalar()
-        gold = connection.execute(sqlalchemy.text("SELECT gold FROM global_inventory")).scalar()
-        return {"number_of_potions": potions, "ml_in_barrels": ml, "gold": gold}
+        gold, potions = connection.execute(sqlalchemy.text("SELECT SUM(gold) AS total_gold, "
+                                                               "SUM(quantity) "
+                                                               "FROM ledger")).one()
+
+        ml = connection.execute(sqlalchemy.text("SELECT SUM(ml) AS total_ml FROM barrel_ledger")).scalar()
+        return {"gold": gold, "number_of_potions": potions, "ml_in_barrels": ml}
 
 
 # Gets called once a day
@@ -32,9 +34,9 @@ def get_capacity_plan():
     with db.engine.begin() as connection:
 
         # gets values to determine plan
-        values = connection.execute(sqlalchemy.text("SELECT gold, potion_capacity, barrel_capacity "
-                                                    "FROM global_inventory WHERE id = 1")).one()
-        gold = values.gold
+        gold = connection.execute(sqlalchemy.text("SELECT SUM(gold) AS total_gold FROM ledger")).scalar()
+
+        values = connection.execute(sqlalchemy.text("SELECT potion_capacity, barrel_capacity FROM global_inventory")).one()
         p_capacity = values.potion_capacity
         b_capacity = values.barrel_capacity
 
@@ -54,10 +56,6 @@ def get_capacity_plan():
             new_bCapacity = 0
 
         # updates global_inventory regardless if a change occurred
-
-        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET gold = gold - {price}, "
-                                           f"potion_capacity = {p_capacity + new_pCapacity},"
-                                           f"barrel_capacity = {b_capacity + new_bCapacity}"))
         return {
             "potion_capacity": new_pCapacity,
             "ml_capacity": new_bCapacity
@@ -76,5 +74,11 @@ def deliver_capacity_plan(capacity_purchase: CapacityPurchase, order_id: int):
     Start with 1 capacity for 50 potions and 1 capacity for 10000 ml of potion. Each additional 
     capacity unit costs 1000 gold.
     """
-
+    price = -(capacity_purchase.potion_capacity + capacity_purchase.ml_capacity) * 1000
+    with db.engine.begin() as connection:
+        connection.execute(
+            sqlalchemy.text(f"INSERT INTO ledger (gold, customer_name, order_id) VALUES ({price}, 'Admin, {order_id})"))
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET "
+                                           f"potion_capacity = potion_capacity + {capacity_purchase.potion_capacity},"
+                                           f"barrel_capacity = barrel_capacity + {capacity_purchase.ml_capacity}"))
     return "OK"

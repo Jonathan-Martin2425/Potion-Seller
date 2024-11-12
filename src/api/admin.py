@@ -19,18 +19,17 @@ def reset():
     """
 
     with db.engine.begin() as connection:
-        connection.execute(sqlalchemy.text("UPDATE global_inventory SET potions= 0, "
-                                           "gold= 100, ml= 0, potion_capacity = 0, barrel_capacity = 0 "
-                                           "WHERE id= 1"))
+        # resets both ledgers, leaving only 1st with default 100 gold
+        connection.execute(sqlalchemy.text("DELETE FROM ledger WHERE NOT id = 1"))
+        connection.execute(sqlalchemy.text("DELETE FROM barrel_ledger"))
 
-        # updates quantity of all potion types
-        connection.execute(sqlalchemy.text("UPDATE potions SET quantity= 0"))
+        # resets cart order and item tables
+        connection.execute(sqlalchemy.text("DELETE FROM cart_orders WHERE NOT id = 1"))
+        connection.execute(sqlalchemy.text("DELETE FROM cart_items WHERE NOT id = 1"))
 
-        # updates quantity of ml for all types
-        connection.execute(sqlalchemy.text("UPDATE barrels SET ml = 0"))
-
-        # resets all cart orders, leaving only 1 default as a place holder
-        connection.execute(sqlalchemy.text("DELETE FROM cart_items WHERE NOT cart_id = 1"))
-        connection.execute(sqlalchemy.text("DELETE FROM cart_orders WHERE NOT cart_id = 1"))
+        # sets ml and potion capacity back to 0
+        connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET "
+                                           f"potion_capacity = 0,"
+                                           f"barrel_capacity = 0"))
 
     return "OK"

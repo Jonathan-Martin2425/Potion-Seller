@@ -1,3 +1,5 @@
+import random
+
 from fastapi import APIRouter
 import sqlalchemy
 from src import database as db
@@ -47,14 +49,22 @@ def get_catalog():
         # checks quantity of all potion types and adds
         # potions type to catalog if there >0 in the inventory
         potion_types = []
-        for t in connection.execute(
-                sqlalchemy.text("SELECT potion_sku, potion_name, quantity, R, G, B, D FROM potions ORDER BY id ASC")):
-            p = (Potion(t.potion_sku, t.potion_name, t.quantity, [t.r, t.g, t.b, t.d]))
-            potion_types.append(p)
-        for i in range(len(potion_types)):
-            if potion_types[i].quantity > 0:
-                res.append(catalog_json(potion_types[i].quantity, potion_types[i].sku,
-                                        potion_types[i].name, potion_types[i].type_list))
+        t = connection.execute(
+            sqlalchemy.text("SELECT potion_sku, potion_name, SUM(ledger.quantity) AS total, r, g, b, d FROM potions "
+                            "LEFT JOIN ledger ON sku = potion_sku "
+                            "GROUP BY potion_sku, potion_name, r, g, b, d "
+                            "ORDER BY total ASC")).all()
+        for p in t:
+            if p.total is not None:
+                potion_types.append(Potion(p.potion_sku, p.potion_name, p.total, [p.r, p.g, p.b, p.d]))
+            else:
+                potion_types.append(Potion(p.potion_sku, p.potion_name, 0, [p.r, p.g, p.b, p.d]))
+
+        # iterates through all potion_types randomly and adds them to the catalog
+        random.shuffle(potion_types)
+        for p in potion_types:
+            if p.quantity > 0:
+                res.append(catalog_json(p.quantity, p.sku, p.name, p.type_list))
             if len(res) == 6:
                 break
     return res

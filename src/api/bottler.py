@@ -140,12 +140,17 @@ def get_bottle_plan():
         p_capacity = (p_capacity + 1) * 50
 
         # gets the 3 barrel types
-        b = connection.execute(sqlalchemy.text("SELECT SUM(ml) AS total FROM barrel_ledger "
-                                               "GROUP BY type "
-                                               "ORDER BY type DESC")).all()
-        for t in b:
-            barrel_types.append(t.total)
-        print(barrel_types)
+        t = connection.execute(sqlalchemy.text("SELECT barrel_type, SUM(barrel_ledger.ml) AS total FROM barrels "
+                                               "LEFT JOIN barrel_ledger ON type = barrel_type  "
+                                               "GROUP BY barrel_type "
+                                               "ORDER BY barrel_type DESC")).all()
+        for b in t:
+            if b.total is not None:
+                barrel_types.append(int(b.total))
+            else:
+                barrel_types.append(0)
+        print("mls: " + str(barrel_types))
+
 
         # gets all potion types and adds them to list of Potion objs
         # orders by quantity to prioritize potions with the lowest quantity

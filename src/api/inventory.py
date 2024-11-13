@@ -42,11 +42,11 @@ def get_capacity_plan():
 
         # manually adds capacity and sets them and price
         # if there is enough gold
-        if gold > 5000 and p_capacity < 2:
+        if gold > 5500 and p_capacity < 2:
             price = (2 - p_capacity) * 2000
             new_pCapacity = (2 - p_capacity)
             new_bCapacity = (2 - b_capacity)
-        elif gold > 2500 and p_capacity < 1:
+        elif gold > 2750 and p_capacity < 1:
             price = (1 - p_capacity) * 2000
             new_pCapacity = 1
             new_bCapacity = 1

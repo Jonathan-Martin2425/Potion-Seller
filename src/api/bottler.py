@@ -176,7 +176,7 @@ def get_bottle_plan():
 
             # prevent making anymore a potion type if there is
             # already >40% of our capacity of it in inventory
-            if p.quantity > math.floor(p_capacity * 0.4):
+            if p.quantity > math.floor(p_capacity * 0.3):
                 continue
 
             # checks how much of potion we can make depending on

@@ -43,15 +43,12 @@ def get_capacity_plan():
         # manually adds capacity and sets them and price
         # if there is enough gold
         if gold > 5500 and p_capacity < 2:
-            price = (2 - p_capacity) * 2000
             new_pCapacity = (2 - p_capacity)
             new_bCapacity = (2 - b_capacity)
         elif gold > 2750 and p_capacity < 1:
-            price = (1 - p_capacity) * 2000
             new_pCapacity = 1
             new_bCapacity = 1
         else:
-            price = 0
             new_pCapacity = 0
             new_bCapacity = 0
 
@@ -77,7 +74,7 @@ def deliver_capacity_plan(capacity_purchase: CapacityPurchase, order_id: int):
     price = -(capacity_purchase.potion_capacity + capacity_purchase.ml_capacity) * 1000
     with db.engine.begin() as connection:
         connection.execute(
-            sqlalchemy.text(f"INSERT INTO ledger (gold, customer_name, order_id) VALUES ({price}, 'Admin, {order_id})"))
+            sqlalchemy.text(f"INSERT INTO ledger (gold, customer_name, order_id) VALUES ({price}, 'Admin', {order_id})"))
         connection.execute(sqlalchemy.text(f"UPDATE global_inventory SET "
                                            f"potion_capacity = potion_capacity + {capacity_purchase.potion_capacity},"
                                            f"barrel_capacity = barrel_capacity + {capacity_purchase.ml_capacity}"))

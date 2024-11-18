@@ -149,7 +149,7 @@ def get_bottle_plan():
                 barrel_types.append(int(b.total))
             else:
                 barrel_types.append(0)
-        print("mls: " + str(barrel_types))
+        print("mls_before: " + str(barrel_types))
 
 
         # gets all potion types and adds them to list of Potion objs
@@ -167,7 +167,7 @@ def get_bottle_plan():
                 potions_types.append(Potion(p.potion_sku, p.potion_name, p.total, [p.r, p.g, p.b, p.d]))
             else:
                 potions_types.append(Potion(p.potion_sku, p.potion_name, 0, [p.r, p.g, p.b, p.d]))
-
+    print("Potions before: " + str(potions_types))  
     res = []
     # checks if potion capacity has been reached to add potions
     if total_potions < ((p_capacity + 1) * 50):

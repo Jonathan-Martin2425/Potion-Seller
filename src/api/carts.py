@@ -43,17 +43,16 @@ class search_sort_order(str, Enum):
 
 @router.get("/search/", tags=["search"])
 def search_orders(
-        customer_name: str = "",
-        potion_sku: str = "",
-        search_page: str = "",
-        sort_col: search_sort_options = search_sort_options.timestamp,
-        sort_order: search_sort_order = search_sort_order.desc,
-
+    customer_name: str = "",
+    potion_sku: str = "",
+    search_page: str = "",
+    sort_col: search_sort_options = search_sort_options.timestamp,
+    sort_order: search_sort_order = search_sort_order.desc,
 ):
     """
     Search for cart line items by customer name and/or potion sku.
 
-    Customer name and potion sku filter to orders that contain the 
+    Customer name and potion sku filter to orders that contain the
     string (case insensitive). If the filters aren't provided, no
     filtering occurs on the respective search term.
 
@@ -69,7 +68,7 @@ def search_orders(
 
     The response itself contains a previous and next page token (if
     such pages exist) and the results as an array of line items. Each
-    line item contains the line item id (must be unique), item sku, 
+    line item contains the line item id (must be unique), item sku,
     customer name, line item total (in gold), and timestamp of the order.
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
@@ -81,13 +80,14 @@ def search_orders(
         "results": [
             {
                 "line_item_id": 1,
-                "item_sku": "GREEN_POTION",
+                "item_sku": "1 oblivion potion",
                 "customer_name": "Scaramouche",
-                "line_item_total": 20,
+                "line_item_total": 50,
                 "timestamp": "2021-01-01T00:00:00Z",
             }
         ],
     }
+
 
 
 class Customer(BaseModel):
@@ -119,6 +119,7 @@ def post_visits(visit_id: int, customers: list[Customer]):
     """
     Which customers visited the shop today?
     """
+    print("visit_id: " + str(visit_id))
     print(customers)
 
     return "OK"

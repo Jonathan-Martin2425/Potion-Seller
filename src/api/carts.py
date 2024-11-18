@@ -12,10 +12,9 @@ router = APIRouter(
 )
 
 with db.engine.begin() as connection:
-    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC"))
-    for res in result:
-        cur_cart_id = res[0] + 1
-        break
+    result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC")).first()
+    cur_cart_id = result.cart_id + 1
+    print(cur_cart_id)
 
 
 # takes parameters for correct API response
@@ -78,7 +77,8 @@ def search_orders(
         t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
                                                "FROM cart_orders "
                                                "JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id "
-                                               "JOIN potions ON potion_sku = item_sku"))
+                                               "JOIN potions ON potion_sku = item_sku "
+                                               "LIMIT 5"))
         res = []
         i = 1
         for customer in t:
@@ -99,19 +99,19 @@ def search_orders(
             res.append(new_customer_json)
 
         return res
-        """return {
-            "previous": "",
-            "next": "",
-            "results": [
-                {
-                    "line_item_id": 1,
-                    "item_sku": "1 oblivion potion",
-                    "customer_name": "Scaramouche",
-                    "line_item_total": 50,
-                    "timestamp": "2021-01-01T00:00:00Z",
-                }
-            ],
-        }"""
+"""return {
+    "previous": "",
+    "next": "",
+    "results": [
+        {
+            "line_item_id": 1,
+            "item_sku": "1 oblivion potion",
+            "customer_name": "Scaramouche",
+            "line_item_total": 50,
+            "timestamp": "2021-01-01T00:00:00Z",
+        }
+    ],
+}"""
 
 
 class Customer(BaseModel):

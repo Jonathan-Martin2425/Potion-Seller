@@ -43,11 +43,11 @@ class search_sort_order(str, Enum):
 
 @router.get("/search/", tags=["search"])
 def search_orders(
-    customer_name: str = "",
-    potion_sku: str = "",
-    search_page: str = "",
-    sort_col: search_sort_options = search_sort_options.timestamp,
-    sort_order: search_sort_order = search_sort_order.desc,
+        customer_name: str = "",
+        potion_sku: str = "",
+        search_page: str = "",
+        sort_col: search_sort_options = search_sort_options.timestamp,
+        sort_order: search_sort_order = search_sort_order.desc,
 ):
     """
     Search for cart line items by customer name and/or potion sku.
@@ -74,20 +74,44 @@ def search_orders(
     time is 5 total line items.
     """
 
-    return {
-        "previous": "",
-        "next": "",
-        "results": [
-            {
-                "line_item_id": 1,
-                "item_sku": "1 oblivion potion",
-                "customer_name": "Scaramouche",
-                "line_item_total": 50,
-                "timestamp": "2021-01-01T00:00:00Z",
+    with db.engine.begin() as connection:
+        t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
+                                               "FROM cart_orders "
+                                               "JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id "
+                                               "JOIN potions ON potion_sku = item_sku"))
+        res = []
+        i = 1
+        for customer in t:
+            new_customer_json = {
+                "previous": "",
+                "next": "",
+                "results": [
+                    {
+                        "line_item_id": i,
+                        "item_sku": str(customer.quantity) + " " + customer.potion_name,
+                        "customer_name": customer.name,
+                        "line_item_total": customer.quantity * 50,
+                        "timestamp": customer.created_at,
+                    }
+                ],
             }
-        ],
-    }
+            i += 1
+            res.append(new_customer_json)
 
+        return res
+        """return {
+            "previous": "",
+            "next": "",
+            "results": [
+                {
+                    "line_item_id": 1,
+                    "item_sku": "1 oblivion potion",
+                    "customer_name": "Scaramouche",
+                    "line_item_total": 50,
+                    "timestamp": "2021-01-01T00:00:00Z",
+                }
+            ],
+        }"""
 
 
 class Customer(BaseModel):
@@ -110,8 +134,7 @@ class Potion:
         self.type_list = type_list
 
     def __repr__(self):
-        return "Sku: " + self.sku + " Name: " + self.name + " quantity: " + str(self.quantity) + " type: " + str(
-            self.type_list)
+        return " Name: " + self.name + " quantity: " + str(self.quantity)
 
 
 @router.post("/visits/{visit_id}")

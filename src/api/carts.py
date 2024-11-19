@@ -83,20 +83,21 @@ def search_orders(
         p = ""
 
     with db.engine.begin() as connection:
+
         t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
-                                               "FROM cart_orders "
-                                               "JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id "
-                                               "JOIN potions ON potion_sku = item_sku "))
+                                               'FROM cart_orders '
+                                               'JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id '
+                                               'JOIN potions ON potion_sku = item_sku '))
         res = []
-        i = 1
+        i = 0
         for customer in t:
             new_customer_json = {
-                        "line_item_id": i,
-                        "item_sku": str(customer.quantity) + " " + customer.potion_name,
-                        "customer_name": customer.name,
-                        "line_item_total": customer.quantity * 50,
-                        "timestamp": customer.created_at,
-                    }
+                "line_item_id": i + 1,
+                "item_sku": str(customer.quantity) + " " + customer.potion_name,
+                "customer_name": customer.name,
+                "line_item_total": customer.quantity * 50,
+                "timestamp": customer.created_at,
+            }
 
             # checks if search_page field exists, and then
             # adds 5 orders or next page field accordingly
@@ -107,6 +108,8 @@ def search_orders(
                     n = str(int(search_page) + 5)
             else:
                 n = "5"
+                if 0 <= i < 5:
+                    res.append(new_customer_json)
             i += 1
         return {
             "previous": p,

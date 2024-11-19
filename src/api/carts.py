@@ -16,7 +16,6 @@ router = APIRouter(
 with db.engine.begin() as connection:
     result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC")).first()
     cur_cart_id = result.cart_id + 1
-    print(cur_cart_id)
 
 
 # takes parameters for correct API response

@@ -76,8 +76,10 @@ def search_orders(
     """
     n = ""
     try:
-        if int(search_page) > 0:
-            p = search_page
+        if int(search_page) >= 5:
+            p = int(search_page)
+        else:
+            p = int(search_page) - 5
     except ValueError:
         p = ""
 

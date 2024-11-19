@@ -1,3 +1,5 @@
+import math
+
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.api import auth
@@ -14,10 +16,7 @@ router = APIRouter(
 with db.engine.begin() as connection:
     result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC")).first()
     cur_cart_id = result.cart_id + 1
-    result = connection.execute(sqlalchemy.text("SELECT search_order_page FROM global_inventory")).one()
-    page = result.search_order_page
     print(cur_cart_id)
-    print(page)
 
 
 # takes parameters for correct API response
@@ -75,48 +74,49 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
-    global page
+    n = ""
+    try:
+        if int(search_page) > 0:
+            p = search_page
+    except ValueError:
+        p = ""
 
     with db.engine.begin() as connection:
         t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
                                                "FROM cart_orders "
                                                "JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id "
-                                               "JOIN potions ON potion_sku = item_sku "
-                                               "LIMIT 5"))
+                                               "JOIN potions ON potion_sku = item_sku "))
         res = []
         i = 1
         for customer in t:
             new_customer_json = {
-                "previous": "",
-                "next": "",
-                "results": [
-                    {
                         "line_item_id": i,
                         "item_sku": str(customer.quantity) + " " + customer.potion_name,
                         "customer_name": customer.name,
                         "line_item_total": customer.quantity * 50,
                         "timestamp": customer.created_at,
                     }
-                ],
-            }
-            i += 1
-            res.append(new_customer_json)
-            time = customer.created_at
 
-        #return res
-        return [{
-            "previous": "",
-            "next": "",
-            "results": [
-                {
-                    "line_item_id": 1,
-                    "item_sku": "1 oblivion potion",
-                    "customer_name": "Scaramouche",
-                    "line_item_total": 50,
-                    "timestamp": time,
-                }
-            ],
-        }]
+            # checks if search_page field exists, and then
+            # adds 5 orders or next page field accordingly
+            if search_page != "":
+                if int(p) <= i < int(p) + 5:
+                    res.append(new_customer_json)
+                elif i >= int(p) + 5:
+                    n = str(int(p) + 5)
+            else:
+                if len(res) < 5:
+                    res.append(new_customer_json)
+                elif p != "":
+                    n = str(int(p) + 5)
+                else:
+                    n = "5"
+            i += 1
+        return {
+            "previous": p,
+            "next": n,
+            "results": res
+        }
 
 
 class Customer(BaseModel):

@@ -112,7 +112,7 @@ def search_orders(
                     "line_item_id": 1,
                     "item_sku": str(customer.quantity) + " oblivion potion",
                     "customer_name": "Scaramouche",
-                    "line_item_total": 50 * customer.quantity,
+                    "line_item_total": 50,
                     "timestamp": time,
                 }
             ],

@@ -148,7 +148,8 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
         min_ml = min_barrels(barrel_types, max_potion)
         for i in range(3):
             if barrel.potion_type[i] == 1 and gold >= barrel.price and\
-                    (min_ml == i or gold >= barrel.price * 3):
+                    (min_ml == i or gold >= barrel.price * 3) and\
+                    barrel.ml_per_barrel > barrel_skus_total[i]:
                 barrel_skus[i] = barrel.sku
                 barrel_skus_total[i] = barrel.ml_per_barrel
 

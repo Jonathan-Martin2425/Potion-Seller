@@ -104,19 +104,19 @@ def search_orders(
             time = customer.created_at
 
         #return res
-        return {
+        return [{
             "previous": "",
             "next": "",
             "results": [
                 {
-                    "line_item_id": 1,
-                    "item_sku": "2 oblivion potion",
+                    "line_item_id": 2,
+                    "item_sku": str(customer.quantity) + " oblivion potion",
                     "customer_name": "Scaramouche",
-                    "line_item_total": 50,
+                    "line_item_total": 50 * customer.quantity,
                     "timestamp": time,
                 }
             ],
-        }
+        }]
 
 
 class Customer(BaseModel):

@@ -41,13 +41,13 @@ class Potion:
 # takes in a potion type and total ml for barrels
 # returns amount of potion type that can be made at index 0
 # and amount of each barrel on indexes 1-3
-def check_ml(mls: list[int], potion_type: list[int]) -> list[int]:
+def check_ml(mls: list[int], potion_type: list[int], potion_capacity: int) -> list[int]:
     quantity_per_ml = []
     for i in range(len(mls)):
         if potion_type[i] != 0:
             possible_quantity = math.floor(mls[i] / potion_type[i])
-            if possible_quantity > 5:
-                quantity = 5
+            if possible_quantity > 5 * potion_capacity:
+                quantity = 5 * potion_capacity
             else:
                 quantity = possible_quantity
 
@@ -181,7 +181,7 @@ def get_bottle_plan():
 
             # checks how much of potion we can make depending on
             # amount of ml and changes barrels accordingly
-            possible_quantity = check_ml(barrel_types, p.type_list)
+            possible_quantity = check_ml(barrel_types, p.type_list, int(p_capacity/50))
             if possible_quantity[0] > 0 and possible_quantity[0] != 100:
                 for i in range(len(barrel_types)):
                     barrel_types[i] = possible_quantity[i + 1]

@@ -77,9 +77,9 @@ def search_orders(
     n = ""
     try:
         if int(search_page) >= 5:
-            p = int(search_page)
+            p = str(int(search_page) - 5)
         else:
-            p = int(search_page) - 5
+            p = ""
     except ValueError:
         p = ""
 
@@ -102,17 +102,12 @@ def search_orders(
             # checks if search_page field exists, and then
             # adds 5 orders or next page field accordingly
             if search_page != "":
-                if int(p) <= i < int(p) + 5:
+                if int(search_page) <= i < int(search_page) + 5:
                     res.append(new_customer_json)
-                elif i >= int(p) + 5:
-                    n = str(int(p) + 5)
+                elif i >= int(search_page) + 5:
+                    n = str(int(search_page) + 5)
             else:
-                if len(res) < 5:
-                    res.append(new_customer_json)
-                elif p != "":
-                    n = str(int(p) + 5)
-                else:
-                    n = "5"
+                n = "5"
             i += 1
         return {
             "previous": p,

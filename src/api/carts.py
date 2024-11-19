@@ -14,7 +14,10 @@ router = APIRouter(
 with db.engine.begin() as connection:
     result = connection.execute(sqlalchemy.text("SELECT cart_id FROM cart_orders ORDER BY cart_id DESC")).first()
     cur_cart_id = result.cart_id + 1
+    result = connection.execute(sqlalchemy.text("SELECT search_order_page FROM global_inventory")).one()
+    page = result.search_order_page
     print(cur_cart_id)
+    print(page)
 
 
 # takes parameters for correct API response
@@ -72,6 +75,7 @@ def search_orders(
     Your results must be paginated, the max results you can return at any
     time is 5 total line items.
     """
+    global page
 
     with db.engine.begin() as connection:
         t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
@@ -97,21 +101,22 @@ def search_orders(
             }
             i += 1
             res.append(new_customer_json)
+            time = customer.created_at
 
-        return res
-"""return {
-    "previous": "",
-    "next": "",
-    "results": [
-        {
-            "line_item_id": 1,
-            "item_sku": "1 oblivion potion",
-            "customer_name": "Scaramouche",
-            "line_item_total": 50,
-            "timestamp": "2021-01-01T00:00:00Z",
+        #return res
+        return {
+            "previous": "",
+            "next": "",
+            "results": [
+                {
+                    "line_item_id": 1,
+                    "item_sku": "2 oblivion potion",
+                    "customer_name": "Scaramouche",
+                    "line_item_total": 50,
+                    "timestamp": time,
+                }
+            ],
         }
-    ],
-}"""
 
 
 class Customer(BaseModel):

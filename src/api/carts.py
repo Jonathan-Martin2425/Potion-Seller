@@ -83,11 +83,40 @@ def search_orders(
         p = ""
 
     with db.engine.begin() as connection:
+        initial_select = ("SELECT name, quantity, potion_name, cart_orders.created_at " +
+                          'FROM cart_orders ' +
+                          'JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id ' +
+                          'JOIN potions ON potion_sku = item_sku ')
+        select_dict = {}
 
-        t = connection.execute(sqlalchemy.text("SELECT name, quantity, potion_name, cart_orders.created_at "
-                                               'FROM cart_orders '
-                                               'JOIN cart_items ON cart_items.cart_id = cart_orders.cart_id '
-                                               'JOIN potions ON potion_sku = item_sku '))
+        where_clause = ""
+        if customer_name != "":
+            where_clause = "WHERE LOWER(name) LIKE '%' || LOWER(:name) || '%' "
+            select_dict["name"] = customer_name
+
+        if potion_sku != "":
+            if where_clause == "":
+                where_clause = "WHERE LOWER(potion_name) LIKE '%' || LOWER(:sku) || '%' "
+            else:
+                where_clause += "AND LOWER(potion_name) LIKE '%' || LOWER(:sku) || '%' "
+            select_dict["sku"] = potion_sku
+
+        order_by = ""
+        print(sort_col)
+        if sort_col != "":
+            if sort_col == "timestamp":
+                order_by = "ORDER BY cart_orders.created_at "
+            elif sort_col == "line_item_total":
+                order_by = "ORDER BY quantity "
+            elif sort_col == "item_sku":
+                order_by = "ORDER BY potion_name "
+            elif sort_col == "customer_name":
+                order_by = "ORDER BY name "
+            if sort_order.upper() in ["ASC", "DESC"]:
+                order_by += sort_order
+
+        sql_statement = initial_select + where_clause + order_by
+        t = connection.execute(sqlalchemy.text(sql_statement), select_dict)
         res = []
         i = 0
         for customer in t:
@@ -107,9 +136,10 @@ def search_orders(
                 elif i >= int(search_page) + 5:
                     n = str(int(search_page) + 5)
             else:
-                n = "5"
                 if 0 <= i < 5:
                     res.append(new_customer_json)
+                if i >= 5:
+                    n = "5"
             i += 1
         return {
             "previous": p,

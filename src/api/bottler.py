@@ -186,8 +186,8 @@ def get_bottle_plan():
                 for i in range(len(barrel_types)):
                     barrel_types[i] = possible_quantity[i + 1]
                 total_potions += possible_quantity[0]
-                if total_potions > ((p_capacity + 1) * 50):
-                    possible_quantity[0] -= total_potions - 85
+                if total_potions > p_capacity:
+                    possible_quantity[0] -= total_potions - p_capacity
                     if possible_quantity[0] > 0:
                         res.append({"potion_type": p.type_list,
                                     "quantity": possible_quantity[0]})

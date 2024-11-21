@@ -158,11 +158,10 @@ def get_wholesale_purchase_plan(wholesale_catalog: list[Barrel]):
                 barrel_types[i] += barrel.ml_per_barrel
                 gold -= barrel.price
     res = []
-    if total_potions < 85:
-        random_list = [0, 1, 2]
-        random.shuffle(random_list)
-        for i in random_list:
-            if barrel_skus[i] != "" and (total_ml + barrel_skus_total[i]) <= (ml_capacity + 1) * 10000:
-                res.append(barrel_json(barrel_skus[i], 1))
-                total_ml += barrel_skus_total[i]
+    random_list = [0, 1, 2]
+    random.shuffle(random_list)
+    for i in random_list:
+        if barrel_skus[i] != "" and (total_ml + barrel_skus_total[i]) <= (ml_capacity + 1) * 10000:
+            res.append(barrel_json(barrel_skus[i], 1))
+            total_ml += barrel_skus_total[i]
     return res
